@@ -546,7 +546,7 @@ impl EntryWriter<'_> {
     fn do_finish(&mut self) -> io::Result<()> {
         // Pad with zeros if necessary.
         let buf = [0u8; BLOCK_SIZE as usize];
-        let remaining = BLOCK_SIZE.wrapping_sub(self.written) % BLOCK_SIZE;
+        let remaining = (BLOCK_SIZE as u64).wrapping_sub(self.written) % (BLOCK_SIZE as u64);
         self.obj.write_all(&buf[..remaining as usize])?;
         let written = (self.written + remaining) as i64;
 
@@ -592,8 +592,8 @@ fn append(mut dst: &mut dyn Write, header: &Header, mut data: &mut dyn Read) -> 
 
 fn pad_zeroes(dst: &mut dyn Write, len: u64) -> io::Result<()> {
     let buf = [0; BLOCK_SIZE as usize];
-    let remaining = BLOCK_SIZE - (len % BLOCK_SIZE);
-    if remaining < BLOCK_SIZE {
+    let remaining = (BLOCK_SIZE as u64) - (len % (BLOCK_SIZE as u64));
+    if remaining < (BLOCK_SIZE as u64) {
         dst.write_all(&buf[..remaining as usize])?;
     }
     Ok(())

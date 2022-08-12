@@ -15,15 +15,15 @@ use std::str;
 use crate::other;
 use crate::EntryType;
 
+pub const BLOCK_SIZE: usize = 512;
+
 /// A deterministic, arbitrary, non-zero timestamp that use used as `mtime`
 /// of headers when [`HeaderMode::Deterministic`] is used.
 ///
 /// This value, chosen after careful deliberation, corresponds to _Jul 23, 2006_,
 /// which is the date of the first commit for what would become Rust.
-#[cfg(all(any(unix, windows), not(target_arch = "wasm32")))]
+#[cfg(any(unix, windows))]
 const DETERMINISTIC_TIMESTAMP: u64 = 1153704088;
-
-pub(crate) const BLOCK_SIZE: u64 = 512;
 
 pub(crate) const GNU_SPARSE_HEADERS_COUNT: usize = 4;
 
@@ -33,7 +33,7 @@ pub(crate) const GNU_EXT_SPARSE_HEADERS_COUNT: usize = 21;
 #[repr(C)]
 #[allow(missing_docs)]
 pub struct Header {
-    bytes: [u8; BLOCK_SIZE as usize],
+    bytes: [u8; BLOCK_SIZE],
 }
 
 /// Declares the information that should be included when filling a Header
@@ -123,6 +123,12 @@ pub struct GnuHeader {
     pub pad: [u8; 17],
 }
 
+/// Description of a spare entry.
+pub struct SparseEntry {
+    pub offset: u64,
+    pub size: u64,
+}
+
 /// Description of the header of a spare entry.
 ///
 /// Specifies the offset/number of bytes of a chunk of data in octal.
@@ -153,7 +159,7 @@ impl Header {
     /// atime/ctime metadata attributes of files.
     pub fn new_gnu() -> Header {
         let mut header = Header {
-            bytes: [0; BLOCK_SIZE as usize],
+            bytes: [0; BLOCK_SIZE],
         };
         unsafe {
             let gnu = cast_mut::<_, GnuHeader>(&mut header);
@@ -173,7 +179,7 @@ impl Header {
     /// UStar is also the basis used for pax archives.
     pub fn new_ustar() -> Header {
         let mut header = Header {
-            bytes: [0; BLOCK_SIZE as usize],
+            bytes: [0; BLOCK_SIZE],
         };
         unsafe {
             let gnu = cast_mut::<_, UstarHeader>(&mut header);
@@ -192,7 +198,7 @@ impl Header {
     /// metadata like atime/ctime.
     pub fn new_old() -> Header {
         let mut header = Header {
-            bytes: [0; BLOCK_SIZE as usize],
+            bytes: [0; BLOCK_SIZE],
         };
         header.set_mtime(0);
         header
@@ -283,12 +289,12 @@ impl Header {
     }
 
     /// Returns a view into this header as a byte array.
-    pub fn as_bytes(&self) -> &[u8; BLOCK_SIZE as usize] {
+    pub fn as_bytes(&self) -> &[u8; BLOCK_SIZE] {
         &self.bytes
     }
 
     /// Returns a view into this header as a byte array.
-    pub fn as_mut_bytes(&mut self) -> &mut [u8; BLOCK_SIZE as usize] {
+    pub fn as_mut_bytes(&mut self) -> &mut [u8; BLOCK_SIZE] {
         &mut self.bytes
     }
 
@@ -1409,14 +1415,14 @@ impl GnuExtSparseHeader {
     }
 
     /// Returns a view into this header as a byte array.
-    pub fn as_bytes(&self) -> &[u8; BLOCK_SIZE as usize] {
-        debug_assert_eq!(mem::size_of_val(self), BLOCK_SIZE as usize);
+    pub fn as_bytes(&self) -> &[u8; BLOCK_SIZE] {
+        debug_assert_eq!(mem::size_of_val(self), BLOCK_SIZE);
         unsafe { mem::transmute(self) }
     }
 
     /// Returns a view into this header as a byte array.
-    pub fn as_mut_bytes(&mut self) -> &mut [u8; BLOCK_SIZE as usize] {
-        debug_assert_eq!(mem::size_of_val(self), BLOCK_SIZE as usize);
+    pub fn as_mut_bytes(&mut self) -> &mut [u8; BLOCK_SIZE] {
+        debug_assert_eq!(mem::size_of_val(self), BLOCK_SIZE);
         unsafe { mem::transmute(self) }
     }
 
