@@ -9,7 +9,7 @@ use std::path::Path;
 
 use crate::entry::{EntryFields, EntryIo};
 use crate::error::TarError;
-use crate::header::{BLOCK_SIZE, SparseEntry};
+use crate::header::{SparseEntry, BLOCK_SIZE};
 use crate::other;
 use crate::pax::*;
 use crate::{Entry, GnuExtSparseHeader, Header};
